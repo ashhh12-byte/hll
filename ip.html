@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam Session</title>
+
+<style>
+body {
+  margin: 0;
+  background: #020617;
+  font-family: Arial, sans-serif;
+  color: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.card {
+  width: 92%;
+  max-width: 420px;
+  background: #020617;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 0 60px rgba(0,0,0,.6);
+}
+
+h2 {
+  text-align: center;
+  margin: 0 0 8px;
+}
+
+p {
+  text-align: center;
+  font-size: 14px;
+  opacity: .8;
+}
+
+.log {
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: .75;
+  white-space: pre-wrap;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>Exam Session Active</h2>
+  <p>Do not switch apps or leave this page.</p>
+  <div class="log" id="log">Initializing session...</div>
+</div>
+
+<script>
+/* ---------------- SESSION OBJECT ---------------- */
+
+const session = {
+  id: crypto.randomUUID(),
+  startTime: Date.now(),
+  ip: null,
+  device: {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    language: navigator.language,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    screen: {
+      width: screen.width,
+      height: screen.height,
+      pixelRatio: devicePixelRatio
+    },
+    hardware: {
+      cores: navigator.hardwareConcurrency || null,
+      memory: navigator.deviceMemory || null
+    }
+  },
+  events: []
+};
+
+const logBox = document.getElementById("log");
+
+function log(type, info = {}) {
+  session.events.push({ type, time: Date.now(), info });
+  render();
+}
+
+function render() {
+  logBox.textContent =
+    `Session ID:\n${session.id}\n\n` +
+    `IP Address:\n${session.ip || "Detecting..."}\n\n` +
+    `Events:\n` +
+    session.events.map(e => `• ${e.type}`).join("\n");
+}
+
+/* ---------------- IP DETECTION ---------------- */
+
+fetch("https://api.ipify.org?format=json")
+  .then(r => r.json())
+  .then(d => {
+    session.ip = d.ip;
+    log("IP_DETECTED");
+  })
+  .catch(() => log("IP_LOOKUP_FAILED"));
+
+/* ---------------- FOCUS / APP SWITCH ---------------- */
+
+document.addEventListener("visibilitychange", () => {
+  log(document.hidden ? "APP_BACKGROUND" : "APP_FOREGROUND");
+});
+
+window.addEventListener("blur", () => log("WINDOW_BLUR"));
+window.addEventListener("focus", () => log("WINDOW_FOCUS"));
+
+/* ---------------- SCREEN & ORIENTATION ---------------- */
+
+window.addEventListener("resize", () => {
+  log("SCREEN_RESIZE", {
+    w: innerWidth,
+    h: innerHeight
+  });
+});
+
+/* ---------------- COPY / PASTE ---------------- */
+
+document.addEventListener("copy", () => log("COPY"));
+document.addEventListener("paste", () => log("PASTE"));
+
+/* ---------------- INPUT BEHAVIOR ---------------- */
+
+let lastTouch = Date.now();
+
+document.addEventListener("touchstart", () => {
+  lastTouch = Date.now();
+});
+
+document.addEventListener("mousemove", () => {
+  if (Date.now() - lastTouch > 4000) {
+    log("MOUSE_INPUT_ON_PHONE");
+  }
+});
+
+/* ---------------- NETWORK CHANGES ---------------- */
+
+window.addEventListener("online", () => log("NETWORK_ONLINE"));
+window.addEventListener("offline", () => log("NETWORK_OFFLINE"));
+
+/* ---------------- PERIODIC ADMIN SYNC ---------------- */
+
+setInterval(() => {
+  fetch("https://your-admin-endpoint.example/collect", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(session)
+  }).catch(() => {});
+}, 6000);
+
+/* ---------------- START ---------------- */
+
+log("SESSION_STARTED");
+</script>
+
+</body>
+</html>
