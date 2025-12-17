@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Press Button to Continue</title>
+<style>
+  body, html {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #222;
+    color: #fff;
+    font-family: sans-serif;
+  }
+  #overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+  button {
+    padding: 15px 30px;
+    font-size: 20px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <h1>Please press the button to continue</h1>
+  <button id="continueBtn">Continue</button>
+</div>
+
+<script>
+  const overlay = document.getElementById("overlay");
+  const btn = document.getElementById("continueBtn");
+
+  btn.addEventListener("click", () => {
+    overlay.style.display = "none"; // Remove the “lock”
+  });
+
+  // Optional: prevent certain keys
+  document.addEventListener("keydown", (e) => {
+    e.preventDefault(); // Blocks all key presses
+  });
+</script>
+
+</body>
+</html>
