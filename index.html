@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Student Exam</title>
+<style>
+body { background:#111; color:#fff; text-align:center; font-family:Arial }
+video { width:300px; border-radius:12px; margin-top:20px }
+button { padding:12px 20px; font-size:16px; cursor:pointer }
+</style>
+</head>
+<body>
+
+<h2>Online Test – Student</h2>
+<p>Your camera will be shared with the teacher</p>
+<button onclick="start()">Start Exam</button>
+
+<video id="cam" autoplay muted></video>
+
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<script>
+let peer = new Peer();
+let localStream;
+
+peer.on('open', id => {
+  console.log("Student ID:", id);
+  alert("Share this Student ID with teacher:\n" + id);
+});
+
+async function start() {
+  localStream = await navigator.mediaDevices.getUserMedia({ video:true, audio:false });
+  document.getElementById('cam').srcObject = localStream;
+
+  peer.on('call', call => {
+    call.answer(localStream);
+  });
+}
+</script>
+
+</body>
+</html>
